@@ -412,22 +412,24 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             tg = f"@{update.effective_user.username}" if update.effective_user.username else ""
             date_now = datetime.now().strftime("%d.%m.%Y %H:%M")
 
-            em = re.search(r'ЗАПИСАН:\s*([^|]+)\|\s*([^|]+)\|\s*(\w+)(?:\|\s*([^|]*))?(?:\|\s*(.*))?', reply)
+            em = re.search(r'ЗАПИСАН:\s*(.+?)\s*[|]\s*(.+?)\s*[|]\s*(\w+)\s*[|]\s*(.+?)\s*[|]\s*(.+?)(?:\n|$)', reply)
             if em:
+                print(f"ENROLLMENT MATCH: {em.groups()}")
                 try:
-                    requests.post(SHEETS_URL, json={"type":"elective","date":date_now,"parent":em.group(1).strip(),"child":em.group(2).strip(),"elective":em.group(3).strip(),"phone":(em.group(4) or "").strip(),"telegram":(em.group(5) or tg).strip()}, timeout=5)
+                    requests.post(SHEETS_URL, json={"type":"elective","date":date_now,"parent":em.group(1).strip(),"child":em.group(2).strip(),"elective":em.group(3).strip(),"phone":(em.group(4) or "").strip(),"telegram":(em.group(5) or tg).strip()}, timeout=15)
+                    print("Sheets: elective saved OK")
                 except Exception as ex: print(f"Sheets error: {ex}")
 
-            cm = re.search(r'ЗАПИСЬ_В_ЛАГЕРЬ:\s*([^|]+)\|\s*([^|]+)\|\s*([^|]+)\|\s*([^|]+)(?:\|\s*([^|]*))?(?:\|\s*(.*))?', reply)
+            cm = re.search(r'ЗАПИСЬ_В_ЛАГЕРЬ:\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)(?:\n|$)', reply)
             if cm:
                 try:
-                    requests.post(SHEETS_URL, json={"type":"camp","date":date_now,"parent":cm.group(1).strip(),"child":cm.group(2).strip(),"age":cm.group(3).strip(),"weeks":cm.group(4).strip(),"phone":(cm.group(5) or "").strip(),"telegram":(cm.group(6) or tg).strip()}, timeout=5)
+                    requests.post(SHEETS_URL, json={"type":"camp","date":date_now,"parent":cm.group(1).strip(),"child":cm.group(2).strip(),"age":cm.group(3).strip(),"weeks":cm.group(4).strip(),"phone":(cm.group(5) or "").strip(),"telegram":(cm.group(6) or tg).strip()}, timeout=15)
                 except Exception as ex: print(f"Sheets error: {ex}")
 
-            am = re.search(r'ЗАПИСЬ_НА_ПОСТУПЛЕНИЕ:\s*([^|]+)\|\s*([^|]+)\|\s*([^|]+)\|\s*([^|]+)\|\s*([^|]+)(?:\|\s*([^|]*))?(?:\|\s*(.*))?', reply)
+            am = re.search(r'ЗАПИСЬ_НА_ПОСТУПЛЕНИЕ:\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)(?:\n|$)', reply)
             if am:
                 try:
-                    requests.post(SHEETS_URL, json={"type":"admission","date":date_now,"parent":am.group(1).strip(),"child":am.group(2).strip(),"age":am.group(3).strip(),"format":am.group(4).strip(),"day":am.group(5).strip(),"phone":(am.group(6) or "").strip(),"telegram":(am.group(7) or tg).strip()}, timeout=5)
+                    requests.post(SHEETS_URL, json={"type":"admission","date":date_now,"parent":am.group(1).strip(),"child":am.group(2).strip(),"age":am.group(3).strip(),"format":am.group(4).strip(),"day":am.group(5).strip(),"phone":(am.group(6) or "").strip(),"telegram":(am.group(7) or tg).strip()}, timeout=15)
                 except Exception as ex: print(f"Sheets error: {ex}")
         reply = re.sub(r'\nЗАПИСАН:.*$', '', reply, flags=re.MULTILINE)
         reply = re.sub(r'\nЗАПИСЬ_В_ЛАГЕРЬ:.*$', '', reply, flags=re.MULTILINE)
