@@ -406,6 +406,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         data = response.json()
         reply = data["content"][0]["text"]
         user_histories[user_id].append({"role": "assistant", "content": reply})
+        print(f"RAW REPLY: {reply[:500]}")
         if SHEETS_URL and any(t in reply for t in ["ЗАПИСАН:", "ЗАПИСЬ_В_ЛАГЕРЬ:", "ЗАПИСЬ_НА_ПОСТУПЛЕНИЕ:"]):
             from datetime import datetime
             tg = f"@{update.effective_user.username}" if update.effective_user.username else ""
@@ -446,7 +447,10 @@ def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     print("Bot started!")
-    app.run_polling()
+    app.run_polling(
+        drop_pending_updates=True,
+        allowed_updates=Update.ALL_TYPES
+    )
 
 if __name__ == "__main__":
     main()
