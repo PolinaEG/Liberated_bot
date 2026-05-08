@@ -448,11 +448,21 @@ def main():
     app = Application.builder().token(TELEGRAM_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    print("Bot started!")
-    app.run_polling(
-        drop_pending_updates=True,
-        allowed_updates=Update.ALL_TYPES
-    )
+    
+    port = int(os.environ.get("PORT", 8080))
+    webhook_url = os.environ.get("WEBHOOK_URL", "")
+    
+    if webhook_url:
+        print(f"Bot started with webhook: {webhook_url}")
+        app.run_webhook(
+            listen="0.0.0.0",
+            port=port,
+            webhook_url=webhook_url,
+            drop_pending_updates=True,
+        )
+    else:
+        print("Bot started with polling (no WEBHOOK_URL set)")
+        app.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
     main()
