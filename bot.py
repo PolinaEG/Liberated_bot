@@ -476,7 +476,7 @@ CAMBRIDGE INTERNATIONAL SCHOOL:
 user_histories = {}
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
+    await message.reply_text(
         "Добрый день! Я помощник Свободной школы.\n\n"
         "Помогу с любыми вопросами:\n"
         "🏫 Поступление и стоимость\n"
@@ -489,8 +489,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    user_text = update.message.text
+    # Support both regular and Business messages
+    message = update.message or update.business_message
+    if not message or not message.text:
+        return
+    user = update.effective_user
+    if not user:
+        return
+    user_id = user.id
+    user_text = message.text
     if user_id not in user_histories:
         user_histories[user_id] = []
     user_histories[user_id].append({"role": "user", "content": user_text})
@@ -537,17 +544,19 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply = reply.strip()
         if len(reply) > 4000:
             for i in range(0, len(reply), 4000):
-                await update.message.reply_text(reply[i:i+4000])
+                await message.reply_text(reply[i:i+4000])
         else:
-            await update.message.reply_text(reply)
+            await message.reply_text(reply)
     except Exception as e:
         print(f"Error: {e}")
-        await update.message.reply_text("Извините, произошла ошибка. Напишите в @liberated_school")
+        await message.reply_text("Извините, произошла ошибка. Напишите в @liberated_school")
 
 def main():
     app = Application.builder().token(TELEGRAM_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    # Support for Telegram Business messages
+    app.add_handler(MessageHandler(filters.ALL & filters.VIA_BOT, handle_message))
     
     port = int(os.environ.get("PORT", 8080))
     webhook_url = os.environ.get("WEBHOOK_URL", "")
@@ -560,10 +569,14 @@ def main():
             url_path="/webhook",
             webhook_url=webhook_url,
             drop_pending_updates=True,
+            allowed_updates=["message", "business_message", "edited_business_message"],
         )
     else:
         print("Bot started with polling (no WEBHOOK_URL set)")
-        app.run_polling(drop_pending_updates=True)
+        app.run_polling(
+            drop_pending_updates=True,
+            allowed_updates=["message", "business_message", "edited_business_message"]
+        )
 
 if __name__ == "__main__":
     main()
